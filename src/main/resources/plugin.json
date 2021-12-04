@@ -1,0 +1,8 @@
+{
+  "name": "MaskingPlugin",
+  "author": "ShirleyNekoDev",
+  "main": "de.groovybyte.chunky.maskplugin.MaskPlugin",
+  "version": "${version}",
+  "targetVersion": "${chunkyVersion}",
+  "description": "Generate masks for selected materials"
+}
