@@ -14,7 +14,6 @@ import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BooleanSupplier
 import kotlin.math.ceil
-import kotlin.math.roundToInt
 
 /**
  * @author Maximilian Stiede
@@ -29,7 +28,7 @@ open class SuperSampling1FrameRenderer(
 
     override fun getDescription(): String = ""
 
-    override fun getId(): String = "SuperSampling1FrameRenderer"
+    override fun getId(): String = _name
 
     lateinit var postFrameUpdateCallback: () -> Boolean
     override fun setPostRender(callback: BooleanSupplier) {

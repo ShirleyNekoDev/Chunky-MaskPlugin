@@ -1,11 +1,17 @@
 package de.groovybyte.chunky.maskplugin.ui
 
+import de.groovybyte.chunky.maskplugin.utils.fx.action
+import de.groovybyte.chunky.maskplugin.utils.fx.add
+import de.groovybyte.chunky.maskplugin.utils.fx.paddingAll
 import de.groovybyte.chunky.maskplugin.MaskColorConfiguration
 import de.groovybyte.chunky.maskplugin.utils.ColorBinding
 import de.groovybyte.chunky.maskplugin.utils.getSafe
 import javafx.collections.FXCollections
 import javafx.collections.ObservableMap
 import javafx.scene.Node
+import javafx.scene.control.Button
+import javafx.scene.layout.VBox
+import javafx.scene.text.Text
 import se.llbit.chunky.main.Chunky
 import se.llbit.chunky.renderer.scene.Scene
 import se.llbit.chunky.ui.controller.ChunkyFxController
@@ -13,7 +19,6 @@ import se.llbit.chunky.ui.controller.RenderControlsFxController
 import se.llbit.chunky.ui.render.RenderControlsTab
 import se.llbit.math.Octree
 import se.llbit.util.TaskTracker
-import tornadofx.*
 
 /**
  * @author Maximilian Stiede
@@ -21,7 +26,7 @@ import tornadofx.*
 class MaskConfigTab(
     val chunky: Chunky,
     private val colorConfig: MaskColorConfiguration,
-) : RenderControlsTab, Fragment() {
+) : RenderControlsTab {
 
     val skyMask: ColorBinding
     val sunMask: ColorBinding
@@ -81,12 +86,13 @@ class MaskConfigTab(
 //        entitiesTab = controller.findTabOfType<EntitiesTab>()
     }
 
-    override val root = vbox(10.0) {
+    private val root = VBox().apply {
+        spacing = 10.0
         paddingAll = 10.0
 
         isFillWidth = false
 
-        button("Disable Water Octree") {
+        add(Button("Disable Water Octree")) {
             action {
                 javafx.scene.Scene::class.java.getDeclaredField("waterOctree").run {
                     isAccessible = true
@@ -95,25 +101,25 @@ class MaskConfigTab(
             }
         }
 
-        button("Render Mask") {
-            action {
-                runAsync {
-                    updateMask()
-                }.apply {
-                    setOnFailed {
-                        throw exception
-                    }
-                }
-            }
-        }
+//        Button("Render Mask").apply {
+//            action {
+//                runAsync {
+//                    updateMask()
+//                }.apply {
+//                    setOnFailed {
+//                        throw exception
+//                    }
+//                }
+//            }
+//        }
 
-        text("Opacity is not supported!")
+        add(Text("Opacity is not supported!"))
 
         add(materialMaskingPanel)
-//        add(locationMaskingPanel)
+        add(locationMaskingPanel)
     }
 
-    public fun updateMask() {
+    fun updateMask() {
         chunkyScene.refresh()
     }
 }

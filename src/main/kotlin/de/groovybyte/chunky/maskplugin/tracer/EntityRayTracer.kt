@@ -1,7 +1,9 @@
-package de.groovybyte.chunky.maskplugin
+package de.groovybyte.chunky.maskplugin.tracer
 
 import de.groovybyte.chunky.maskplugin.utils.getSafeFieldGetterFor
 import se.llbit.chunky.block.Air
+import se.llbit.chunky.renderer.WorkerState
+import se.llbit.chunky.renderer.scene.RayTracer
 import se.llbit.chunky.renderer.scene.Scene
 import se.llbit.math.bvh.BVH
 import se.llbit.math.Ray
@@ -10,7 +12,23 @@ import se.llbit.math.Vector4
 /**
  * @author Maximilian Stiede
  */
-object EntityPathTracer {
+object EntityRayTracer: RayTracer {
+    override fun trace(scene: Scene, state: WorkerState) {
+        traceRay(scene, state.ray)
+    }
+
+    fun traceRay(scene: Scene, ray: Ray) {
+        while (true) {
+            if (!nextIntersection(scene, ray)) {
+                break
+            } else if (ray.currentMaterial !== Air.INSTANCE && ray.color.w > 0) {
+                break
+            } else {
+                ray.o.scaleAdd(Ray.OFFSET, ray.d)
+            }
+        }
+    }
+
     private val getBVH = Scene::class.java
         .getSafeFieldGetterFor<Scene, BVH>("bvh")
     private val getActorBVH = Scene::class.java
@@ -27,21 +45,9 @@ object EntityPathTracer {
             -.5 + y * invHeight
         )
         ray.o.sub(scene.origin)
-        trace(scene, ray)
+        traceRay(scene, ray)
 
         return ray.color
-    }
-
-    fun trace(scene: Scene, ray: Ray) {
-        while (true) {
-            if (!nextIntersection(scene, ray)) {
-                break
-            } else if (ray.currentMaterial !== Air.INSTANCE && ray.color.w > 0) {
-                break
-            } else {
-                ray.o.scaleAdd(Ray.OFFSET, ray.d)
-            }
-        }
     }
 
     fun nextIntersection(scene: Scene, ray: Ray): Boolean {

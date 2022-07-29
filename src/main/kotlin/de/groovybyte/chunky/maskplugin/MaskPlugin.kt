@@ -1,6 +1,8 @@
 package de.groovybyte.chunky.maskplugin
 
 import de.groovybyte.chunky.maskplugin.math.SuperSampling
+import de.groovybyte.chunky.maskplugin.tracer.EntityRayTracer
+import de.groovybyte.chunky.maskplugin.tracer.MaskRayTracer
 import de.groovybyte.chunky.maskplugin.ui.MaskConfigTab
 import se.llbit.chunky.Plugin
 import se.llbit.chunky.main.Chunky
@@ -13,28 +15,34 @@ import se.llbit.chunky.ui.render.RenderControlsTabTransformer
  */
 class MaskPlugin : Plugin {
     companion object {
-        const val NAME = "MaskPlugin"
-
         private val colorConfig = MaskColorConfiguration()
 
         private val maskPathTracer = MaskRayTracer(colorConfig)
-        val previewMaskRenderer = SuperSampling1FrameRenderer(
+    }
+
+    override fun attach(chunky: Chunky) {
+        Chunky.addPreviewRenderer(SuperSampling1FrameRenderer(
             "MaskPreviewRenderer",
             SuperSampling.NONE,
             maskPathTracer,
             colorConfig::updateBlockPalette
-        )
-        val renderMaskRenderer = SuperSampling1FrameRenderer(
+        ))
+        Chunky.addRenderer(SuperSampling1FrameRenderer(
             "MaskRenderer",
             SuperSampling.ROTATED_GRID_2x2,
             maskPathTracer,
             colorConfig::updateBlockPalette
-        )
-    }
-
-    override fun attach(chunky: Chunky) {
-        Chunky.addPreviewRenderer(previewMaskRenderer)
-        Chunky.addRenderer(renderMaskRenderer)
+        ))
+        Chunky.addPreviewRenderer(SuperSampling1FrameRenderer(
+            "EntityMaskPreviewRenderer",
+            SuperSampling.NONE,
+            EntityRayTracer
+        ))
+        Chunky.addRenderer(SuperSampling1FrameRenderer(
+            "EntityMaskRenderer",
+            SuperSampling.ROTATED_GRID_2x2,
+            EntityRayTracer
+        ))
 
         if (!chunky.isHeadless) {
             val oldTransformer: RenderControlsTabTransformer = chunky.renderControlsTabTransformer

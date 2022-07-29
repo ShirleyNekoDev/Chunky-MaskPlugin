@@ -1,20 +1,13 @@
-package de.groovybyte.chunky.chunkycloudplugin.utils
+package de.groovybyte.chunky.maskplugin.utils.fx
 
-import javafx.event.EventTarget
 import javafx.geometry.Insets
-import javafx.scene.Node
-import javafx.scene.Parent
-import javafx.scene.control.TableView
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
-import javafx.util.Duration
-import tornadofx.*
 
-fun <N : Node> EventTarget.add(child: N, op: N.() -> Unit) {
-    add(child.apply(op))
-}
-
-public val DEBUG_BORDER = Border(
+/**
+ * @author Maximilian Stiede
+ */
+val DEBUG_BORDER = Border(
     BorderStroke(
         Color.RED,
         BorderStrokeStyle.SOLID,
@@ -51,20 +44,3 @@ fun borderWidth(
 ): BorderWidths = BorderWidths(
     top.toDouble(), right.toDouble(), bottom.toDouble(), left.toDouble()
 )
-
-fun HBox.fillWidth() {
-    childrenUnmodifiable.forEach { child ->
-        child.hgrow = Priority.ALWAYS
-        if (child is Region) {
-            child.maxWidth = Double.POSITIVE_INFINITY
-        }
-    }
-}
-
-fun <T> TableView<T>.fixColumnWidths() {
-    runLater(Duration(30.0)) {
-        lookupAll(".column-header")
-            .filterIsInstance<Parent>()
-            .forEach(javafx.scene.Parent::requestLayout)
-    }
-}

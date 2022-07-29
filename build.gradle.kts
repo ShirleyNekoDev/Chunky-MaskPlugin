@@ -1,8 +1,5 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 plugins {
     kotlin("jvm") version "1.7.10"
@@ -15,7 +12,7 @@ plugins {
 group = "de.groovybyte.chunky"
 version = "1.0"
 // https://repo.lemaik.de/se/llbit/chunky-core/maven-metadata.xml
-val chunkyVersion = "2.5.0-SNAPSHOT"
+val chunkyVersion = "2.5.0-20220304.113004-103"
 
 repositories {
     mavenLocal()
@@ -25,17 +22,10 @@ repositories {
 }
 
 dependencies {
-    val kotlinVersion = plugins.firstIsInstanceOrNull<KotlinBasePlugin>()?.pluginVersion
     implementation(kotlin("stdlib-jdk8"))
 
     implementation("se.llbit:chunky-core:$chunkyVersion") {
         isChanging = true
-    }
-
-    implementation("no.tornado:tornadofx:1.7.20") {
-        constraints {
-            implementation(kotlin("reflect", version = kotlinVersion))
-        }
     }
 }
 
@@ -55,13 +45,13 @@ tasks {
     }
 
     withType<JavaCompile> {
-        sourceCompatibility = "1.8"
-        targetCompatibility = "1.8"
+        sourceCompatibility = "9"
+        targetCompatibility = "9"
     }
     withType<KotlinJvmCompile> {
         kotlinOptions {
             javaParameters = true
-            jvmTarget = "1.8"
+            jvmTarget = "9"
             apiVersion = "1.7"
             languageVersion = "1.7"
         }

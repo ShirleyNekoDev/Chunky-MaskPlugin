@@ -1,11 +1,17 @@
 package de.groovybyte.chunky.maskplugin.ui
 
-import de.groovybyte.chunky.maskplugin.EntityPathTracer
+import de.groovybyte.chunky.maskplugin.tracer.EntityRayTracer
 import de.groovybyte.chunky.maskplugin.MaskingEntity
+import de.groovybyte.chunky.maskplugin.utils.fx.action
+import de.groovybyte.chunky.maskplugin.utils.fx.add
+import javafx.scene.control.Button
+import javafx.scene.control.TitledPane
+import javafx.scene.layout.Pane
+import javafx.scene.layout.VBox
+import javafx.scene.text.Text
 import se.llbit.math.ColorUtil
 import se.llbit.math.Vector3
 import se.llbit.math.Vector4
-import tornadofx.*
 import kotlin.math.PI
 import kotlin.random.Random
 
@@ -14,45 +20,21 @@ import kotlin.random.Random
  */
 class LocationMaskingPanel(
     private val maskConfigTab: MaskConfigTab
-) : Fragment() {
-    override val root = titledpane("Location Masking", collapsible = true) {
+) : TitledPane("Location Masking", VBox(10.0)) {
+    init {
+        isCollapsible = true
         isAnimated = false
         isExpanded = false
 
-        vbox(10.0) {
-            text("Manually create masks for spaces in your scene using cuboids or planes.")
+        (content as Pane).apply {
+            add(Text("Manually create masks for spaces in your scene using cuboids or planes."))
 
-            button("add mask entity") {
-                action(::spawnEntities)
-            }
-
-            button("Mask entities") {
+            add(Button("add mask entity")) {
                 action {
-                    maskEntities()
+                    spawnEntities()
                 }
             }
         }
-    }
-
-    fun maskEntities() {
-        println("masking...")
-        with(maskConfigTab.chunkyScene) {
-            for (y in 0 until height) {
-                for (x in 0 until width) {
-                    val index = (x + y * width) * 3
-                    val color = EntityPathTracer.trace(x, y, this)
-//                    if(color.w != 0.0) {
-                    sampleBuffer[index + 0] = color.x
-                    sampleBuffer[index + 1] = color.y
-                    sampleBuffer[index + 2] = color.z
-//                    }
-                }
-            }
-//            for (y in 0 until height)
-//                for (x in 0 until width)
-//                    finalizePixel(x, y)
-        }
-//        maskConfig.renderManager.canvas.repaint()
     }
 
     private val random = java.util.Random()

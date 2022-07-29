@@ -1,5 +1,7 @@
-package de.groovybyte.chunky.maskplugin
+package de.groovybyte.chunky.maskplugin.tracer
 
+import de.groovybyte.chunky.maskplugin.FakeMaterial
+import de.groovybyte.chunky.maskplugin.MaskColorConfiguration
 import de.groovybyte.chunky.maskplugin.utils.CelestialUtils
 import de.groovybyte.chunky.maskplugin.utils.getSafeFieldGetterFor
 import se.llbit.chunky.block.Air
@@ -18,6 +20,42 @@ import se.llbit.math.bvh.BVH
 open class MaskRayTracer(
     val colorConfig: MaskColorConfiguration
 ) : RayTracer {
+
+    override fun trace(scene: Scene, state: WorkerState) {
+        traceRay(scene, state.ray)
+    }
+
+    fun traceRay(scene: Scene, ray: Ray) {
+        // TODO(here or in maskRenderer): apply fixes from Scene::rayTrace
+
+        if (scene.isInWater(ray)) {
+            ray.currentMaterial = Water.INSTANCE
+        } else {
+            ray.currentMaterial = Air.INSTANCE
+        }
+
+        followRay(scene, ray)
+
+        if (ray.currentMaterial === Air.INSTANCE) {
+            ray.color.set(colorConfig.skyMaskColor)
+        }
+
+//        if (ray.currentMaterial.isWater) {
+//            traceWaterMask(scene, ray)
+//        }
+    }
+
+    fun followRay(scene: Scene, ray: Ray): Boolean {
+        while (true) {
+            if (!nextIntersection(scene, ray)) {
+                return false
+            } else if (ray.currentMaterial !== Air.INSTANCE && ray.color.w > 0) {
+                return true
+            } else {
+                ray.o.scaleAdd(Ray.OFFSET, ray.d)
+            }
+        }
+    }
 
 //    private var maskBVH: BVH
 
@@ -48,7 +86,7 @@ open class MaskRayTracer(
     preview material texture
     */
 
-    protected fun nextIntersection(scene: Scene, ray: Ray): Boolean {
+    fun nextIntersection(scene: Scene, ray: Ray): Boolean {
         ray.setPrevMaterial(ray.currentMaterial, ray.currentData)
         ray.t = Double.POSITIVE_INFINITY
         var hit = false
@@ -194,41 +232,5 @@ open class MaskRayTracer(
         } else {
             ray.color.set(blockReflectionColor)
         }
-    }
-
-    protected fun followRay(scene: Scene, ray: Ray): Boolean {
-        while (true) {
-            if (!nextIntersection(scene, ray)) {
-                return false
-            } else if (ray.currentMaterial !== Air.INSTANCE && ray.color.w > 0) {
-                return true
-            } else {
-                ray.o.scaleAdd(Ray.OFFSET, ray.d)
-            }
-        }
-    }
-
-    protected fun traceRay(scene: Scene, ray: Ray) {
-        // TODO(here or in maskRenderer): apply fixes from Scene::rayTrace
-
-        if (scene.isInWater(ray)) {
-            ray.currentMaterial = Water.INSTANCE
-        } else {
-            ray.currentMaterial = Air.INSTANCE
-        }
-
-        followRay(scene, ray)
-
-        if (ray.currentMaterial === Air.INSTANCE) {
-            ray.color.set(colorConfig.skyMaskColor)
-        }
-
-//        if (ray.currentMaterial.isWater) {
-//            traceWaterMask(scene, ray)
-//        }
-    }
-
-    override fun trace(scene: Scene, state: WorkerState) {
-        traceRay(scene, state.ray)
     }
 }
