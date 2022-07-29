@@ -1,16 +1,21 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile
+import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 plugins {
-    kotlin("jvm") version "1.6.0"
-    id("org.openjfx.javafxplugin") version "0.0.10"
+    kotlin("jvm") version "1.7.10"
+    id("org.openjfx.javafxplugin") version "0.0.13"
 
-    id("com.github.ben-manes.versions") version "0.39.0"
+    id("com.github.ben-manes.versions") version "0.42.0"
     idea
 }
 
 group = "de.groovybyte.chunky"
 version = "1.0"
-val chunkyVersion = "2.4.1"
+// https://repo.lemaik.de/se/llbit/chunky-core/maven-metadata.xml
+val chunkyVersion = "2.5.0-SNAPSHOT"
 
 repositories {
     mavenLocal()
@@ -20,8 +25,8 @@ repositories {
 }
 
 dependencies {
-    val kotlinVersion = "1.6.0"
-    implementation(kotlin("stdlib-jdk8", version = kotlinVersion))
+    val kotlinVersion = plugins.firstIsInstanceOrNull<KotlinBasePlugin>()?.pluginVersion
+    implementation(kotlin("stdlib-jdk8"))
 
     implementation("se.llbit:chunky-core:$chunkyVersion") {
         isChanging = true
@@ -35,24 +40,30 @@ dependencies {
 }
 
 javafx {
-    version = "17"
+    version = "18.0.2"
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 
 tasks {
     processResources {
-        expand(
-            "version" to project.version,
-            "chunkyVersion" to chunkyVersion,
-        )
+        filesMatching("plugin.json") {
+            expand(
+                "version" to project.version,
+                "chunkyVersion" to chunkyVersion,
+            )
+        }
     }
 
+    withType<JavaCompile> {
+        sourceCompatibility = "1.8"
+        targetCompatibility = "1.8"
+    }
     withType<KotlinJvmCompile> {
         kotlinOptions {
             javaParameters = true
             jvmTarget = "1.8"
-            apiVersion = "1.6"
-            languageVersion = "1.6"
+            apiVersion = "1.7"
+            languageVersion = "1.7"
         }
     }
 
@@ -63,11 +74,25 @@ tasks {
             files { dep ->
                 when {
                     dep.name.startsWith("chunky") -> false
+                    dep.name.startsWith("javafx") -> false
                     else -> true
                 }
             }.forEach { file ->
                 from(zipTree(file.absoluteFile))
             }
+        }
+    }
+
+    withType<DependencyUpdatesTask> {
+        val regex = Regex("^[0-9,.v-]+(-r)?\$")
+        fun isNonStable(version: String): Boolean {
+            val stableKeyword = listOf("RELEASE", "FINAL", "GA")
+                .any { keyword -> version.toUpperCase().contains(keyword) }
+            return !stableKeyword && !regex.matches(version)
+        }
+
+        rejectVersionIf {
+            isNonStable(candidate.version)
         }
     }
 }

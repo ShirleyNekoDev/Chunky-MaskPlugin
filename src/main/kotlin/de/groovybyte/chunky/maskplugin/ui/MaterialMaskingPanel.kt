@@ -1,22 +1,20 @@
 package de.groovybyte.chunky.maskplugin.ui
 
 import de.groovybyte.chunky.chunkycloudplugin.utils.*
+import de.groovybyte.chunky.maskplugin.utils.ColorBinding
 import de.groovybyte.chunky.maskplugin.utils.copy
 import javafx.collections.ListChangeListener
-import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.control.ButtonType
-import javafx.scene.control.CheckBox
 import javafx.scene.control.TableColumn
 import javafx.scene.paint.Color
-import javafx.util.Duration
 import tornadofx.*
 
 /**
  * @author Maximilian Stiede
  */
 class MaterialMaskingPanel(
-    private val maskConfig: MaskConfigTab
+    private val maskConfigTab: MaskConfigTab
 ) : Fragment() {
     fun update() {
         materialMaskTable.sort()
@@ -24,8 +22,8 @@ class MaterialMaskingPanel(
 
     val innerWidth = 340.0
 
-    val typedMaskTable = tableview<Pair<String, MaskConfigTab.ColorBinding>> {
-        readonlyColumn("Type", Pair<String, MaskConfigTab.ColorBinding>::first) {
+    val typedMaskTable = tableview<Pair<String, ColorBinding>> {
+        readonlyColumn("Type", Pair<String, ColorBinding>::first) {
             cellFormat { name ->
                 text = name
                 paddingLeft = 6.0
@@ -35,7 +33,7 @@ class MaterialMaskingPanel(
                 }
             }
         }.remainingWidth()
-        readonlyColumn("Mask Color", Pair<String, MaskConfigTab.ColorBinding>::second) {
+        readonlyColumn("Mask Color", Pair<String, ColorBinding>::second) {
             isSortable = false
             maxWidth = 100.0
             cellFormat { binding ->
@@ -45,7 +43,7 @@ class MaterialMaskingPanel(
                 }
             }
         }.contentWidth(useAsMin = true)
-        readonlyColumn("Opaque", Pair<String, MaskConfigTab.ColorBinding>::second) {
+        readonlyColumn("Opaque", Pair<String, ColorBinding>::second) {
             isSortable = false
             maxWidth = 70.0
             cellFormat { binding ->
@@ -59,20 +57,26 @@ class MaterialMaskingPanel(
                                 opacity = if (checked) 1.0 else 0.0
                             )
                         }
+                        updateMask()
                     }
                 }
             }
         }
 
-        with(maskConfig) {
-            items.addAll(
-                "Clouds" to cloudMask,
+        with(maskConfigTab) {
+            listOf(
                 "Sky" to skyMask,
+                "Sun" to sunMask,
+                "Clouds" to cloudMask,
                 "Water" to waterMask,
                 "Entities & Special Blocks" to bvhMask,
                 "Actors" to actorMask,
                 "Unknown" to anyMaterialMask
-            )
+            ).onEach { (_, colorBinding) ->
+                colorBinding.onChange {
+                    updateMask()
+                }
+            }.run(items::addAll)
         }
 
         prefWidth = innerWidth
@@ -80,8 +84,8 @@ class MaterialMaskingPanel(
         smartResize()
     }
 
-    val materialMaskTable = tableview<Pair<String, MaskConfigTab.ColorBinding>> {
-        readonlyColumn("Material", Pair<String, MaskConfigTab.ColorBinding>::first) {
+    val materialMaskTable = tableview<Pair<String, ColorBinding>> {
+        readonlyColumn("Material", Pair<String, ColorBinding>::first) {
             comparator = String.CASE_INSENSITIVE_ORDER
             sortOrder.add(this)
             sortType = TableColumn.SortType.ASCENDING
@@ -94,7 +98,7 @@ class MaterialMaskingPanel(
                 }
             }
         }.remainingWidth()
-        readonlyColumn("Mask Color", Pair<String, MaskConfigTab.ColorBinding>::second) {
+        readonlyColumn("Mask Color", Pair<String, ColorBinding>::second) {
             isSortable = false
             maxWidth = 100.0
             cellFormat { binding ->
@@ -105,7 +109,7 @@ class MaterialMaskingPanel(
             }
         }.contentWidth(useAsMin = true)
 
-        with(maskConfig) {
+        with(maskConfigTab) {
             items.bind(specificMaterialMasks) { key, value -> key to value }
         }
 
@@ -160,6 +164,7 @@ class MaterialMaskingPanel(
                 it.addedSubList.forEach { (_, colorBinding) ->
                     colorBinding.onChange {
                         materialColorsChanged = true
+                        updateMask()
                     }
                 }
             }
@@ -185,18 +190,29 @@ class MaterialMaskingPanel(
     }
 
     private fun assignUniqueMaterialColors() {
-        with(maskConfig.specificMaterialMasks) {
+        haltMaskUpdates = true
+        with(maskConfigTab.specificMaterialMasks) {
             val step = 360.0 / size
             values.forEachIndexed { i, colorBinding ->
                 colorBinding.color.set(Color.hsb(i * step, 1.0, 1.0))
             }
         }
+        haltMaskUpdates = false
+        updateMask()
         materialColorsChanged = false
     }
 
     private fun assignFlatMaterialColors() {
-        maskConfig.specificMaterialMasks.values
-            .forEach(MaskConfigTab.ColorBinding::setToDefault)
+        maskConfigTab.specificMaterialMasks.values
+            .forEach(ColorBinding::setToDefault)
+        updateMask() // fixes setToDefault not calling onChange
         materialColorsChanged = false
+    }
+
+    var haltMaskUpdates = false
+
+    private fun updateMask() {
+        if(!haltMaskUpdates)
+            maskConfigTab.updateMask()
     }
 }

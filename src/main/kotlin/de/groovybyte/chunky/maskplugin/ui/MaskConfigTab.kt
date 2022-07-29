@@ -1,45 +1,73 @@
 package de.groovybyte.chunky.maskplugin.ui
 
-import de.groovybyte.chunky.maskplugin.SwitchableRenderManager
-import de.groovybyte.chunky.maskplugin.utils.averageFlatColor
+import de.groovybyte.chunky.maskplugin.MaskColorConfiguration
+import de.groovybyte.chunky.maskplugin.utils.ColorBinding
 import de.groovybyte.chunky.maskplugin.utils.getSafe
-import de.groovybyte.chunky.maskplugin.utils.set
-import de.groovybyte.chunky.maskplugin.utils.toColor
-import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableMap
 import javafx.scene.Node
-import javafx.scene.paint.Color
-import se.llbit.chunky.block.Air
-import se.llbit.chunky.chunk.BlockPalette
 import se.llbit.chunky.main.Chunky
 import se.llbit.chunky.renderer.scene.Scene
-import se.llbit.chunky.ui.ChunkyFxController
-import se.llbit.chunky.ui.RenderControlsFxController
+import se.llbit.chunky.ui.controller.ChunkyFxController
+import se.llbit.chunky.ui.controller.RenderControlsFxController
 import se.llbit.chunky.ui.render.RenderControlsTab
-import se.llbit.chunky.world.Material
 import se.llbit.math.Octree
-import se.llbit.math.Vector4
 import se.llbit.util.TaskTracker
 import tornadofx.*
-import kotlin.collections.set
 
 /**
  * @author Maximilian Stiede
  */
 class MaskConfigTab(
     val chunky: Chunky,
+    private val colorConfig: MaskColorConfiguration,
 ) : RenderControlsTab, Fragment() {
+
+    val skyMask: ColorBinding
+    val sunMask: ColorBinding
+    val cloudMask: ColorBinding
+    val waterMask: ColorBinding
+    val bvhMask: ColorBinding
+    val actorMask: ColorBinding
+    val anyMaterialMask: ColorBinding
+
+    private val materialMaskingPanel: MaterialMaskingPanel
+    private val locationMaskingPanel: LocationMaskingPanel
+
+    val specificMaterialMasks: ObservableMap<String, ColorBinding> =
+        FXCollections.observableHashMap()
+
+    init {
+        with(colorConfig) {
+            skyMask = ColorBinding(skyMaskColor)
+            sunMask = ColorBinding(sunMaskColor)
+            cloudMask = ColorBinding(cloudMaskColor)
+            waterMask = ColorBinding(waterMaskColor)
+            bvhMask = ColorBinding(bvhMaskColor)
+            actorMask = ColorBinding(actorMaskColor)
+            anyMaterialMask = ColorBinding(anyMaterialMaskColor)
+        }
+
+        materialMaskingPanel = MaterialMaskingPanel(this)
+        locationMaskingPanel = LocationMaskingPanel(this)
+
+        with(colorConfig) {
+            registerBlockPaletteChangeListener { removedMaterials, addedMaterials ->
+                specificMaterialMasks.keys.removeAll(removedMaterials)
+                specificMaterialMasks.putAll(addedMaterials)
+                materialMaskingPanel.update()
+            }
+        }
+    }
+
     override fun update(scene: Scene) {
-        refreshMaskPalette(scene.palette)
+        colorConfig.updateBlockPalette(scene.palette)
     }
 
     override fun getTabTitle(): String = "Masking"
 
     override fun getTabContent(): Node = root
 
-    val renderManager: SwitchableRenderManager
-        get() = chunky.renderController.renderer as SwitchableRenderManager
     val chunkyScene: Scene
         get() = chunky.sceneManager.scene
 
@@ -51,78 +79,6 @@ class MaskConfigTab(
             .getDeclaredField("taskTracker")
             .getSafe(controller.chunkyController)
 //        entitiesTab = controller.findTabOfType<EntitiesTab>()
-    }
-
-    inner class ColorBinding(colorRef: Vector4) {
-        val defaultColor = colorRef.toColor()
-
-        val color = SimpleObjectProperty(colorRef.toColor()).apply {
-            onChange { colorRef.set(it!!) }
-        }
-
-        fun setToDefault() {
-            color.value = defaultColor;
-        }
-
-        fun onChange(callback: (Color) -> Unit) {
-            color.onChange {
-                if (it != null && it != defaultColor) {
-                    callback(it)
-                }
-            }
-        }
-    }
-
-    val cloudMask: ColorBinding
-    val skyMask: ColorBinding
-    val waterMask: ColorBinding
-    val bvhMask: ColorBinding
-    val actorMask: ColorBinding
-    val anyMaterialMask: ColorBinding
-
-    val specificMaterialMasks: ObservableMap<String, ColorBinding> =
-        FXCollections.observableHashMap()
-
-    private val materialMaskingPanel: MaterialMaskingPanel
-    private val locationMaskingPanel: LocationMaskingPanel
-
-    public fun refreshMaskPalette(palette: BlockPalette) {
-        with(renderManager.maskRayTracer) {
-            val blockPalette = palette.palette
-                .filter { material ->
-                    material != Air.INSTANCE &&
-                        !material.isWater &&
-                        !material.isEntity &&
-                        !material.isBlockEntity
-                }
-                .associateBy(Material::name)
-            val addedMaterials = blockPalette.keys - specificMaterialMaskColors.keys
-            val removedMaterials = specificMaterialMaskColors.keys - blockPalette.keys
-
-            specificMaterialMaskColors.keys.removeAll(removedMaterials)
-            specificMaterialMasks.keys.removeAll(removedMaterials)
-
-            addedMaterials.forEach { materialName ->
-                val vec4 = blockPalette[materialName]!!.averageFlatColor
-                specificMaterialMaskColors[materialName] = vec4
-                specificMaterialMasks[materialName] = ColorBinding(vec4)
-            }
-
-            materialMaskingPanel.update()
-        }
-    }
-
-    init {
-        with(renderManager.maskRayTracer) {
-            cloudMask = ColorBinding(cloudMaskColor)
-            skyMask = ColorBinding(skyMaskColor)
-            waterMask = ColorBinding(waterMaskColor)
-            bvhMask = ColorBinding(bvhMaskColor)
-            actorMask = ColorBinding(actorMaskColor)
-            anyMaterialMask = ColorBinding(anyMaterialMaskColor)
-        }
-        materialMaskingPanel = MaterialMaskingPanel(this)
-        locationMaskingPanel = LocationMaskingPanel(this)
     }
 
     override val root = vbox(10.0) {
@@ -142,7 +98,7 @@ class MaskConfigTab(
         button("Render Mask") {
             action {
                 runAsync {
-                    renderManager.renderMask(chunkyScene, taskTracker)
+                    updateMask()
                 }.apply {
                     setOnFailed {
                         throw exception
@@ -155,5 +111,9 @@ class MaskConfigTab(
 
         add(materialMaskingPanel)
 //        add(locationMaskingPanel)
+    }
+
+    public fun updateMask() {
+        chunkyScene.refresh()
     }
 }

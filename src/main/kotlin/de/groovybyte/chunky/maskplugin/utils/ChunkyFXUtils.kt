@@ -1,6 +1,6 @@
 package de.groovybyte.chunky.maskplugin.utils
 
-import se.llbit.chunky.ui.RenderControlsFxController
+import se.llbit.chunky.ui.controller.RenderControlsFxController
 import se.llbit.chunky.ui.render.RenderControlsTab
 
 /**

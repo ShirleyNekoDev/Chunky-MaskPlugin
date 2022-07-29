@@ -2,9 +2,7 @@ package de.groovybyte.chunky.maskplugin.ui
 
 import de.groovybyte.chunky.maskplugin.EntityPathTracer
 import de.groovybyte.chunky.maskplugin.MaskingEntity
-import javafx.scene.Scene
 import se.llbit.math.ColorUtil
-import se.llbit.math.Octree
 import se.llbit.math.Vector3
 import se.llbit.math.Vector4
 import tornadofx.*
@@ -15,7 +13,7 @@ import kotlin.random.Random
  * @author Maximilian Stiede
  */
 class LocationMaskingPanel(
-    private val maskConfig: MaskConfigTab
+    private val maskConfigTab: MaskConfigTab
 ) : Fragment() {
     override val root = titledpane("Location Masking", collapsible = true) {
         isAnimated = false
@@ -38,28 +36,28 @@ class LocationMaskingPanel(
 
     fun maskEntities() {
         println("masking...")
-        with(maskConfig.chunkyScene) {
+        with(maskConfigTab.chunkyScene) {
             for (y in 0 until height) {
                 for (x in 0 until width) {
                     val index = (x + y * width) * 3
                     val color = EntityPathTracer.trace(x, y, this)
 //                    if(color.w != 0.0) {
-                        sampleBuffer[index + 0] = color.x
-                        sampleBuffer[index + 1] = color.y
-                        sampleBuffer[index + 2] = color.z
+                    sampleBuffer[index + 0] = color.x
+                    sampleBuffer[index + 1] = color.y
+                    sampleBuffer[index + 2] = color.z
 //                    }
                 }
             }
-            for (y in 0 until height)
-                for (x in 0 until width)
-                    finalizePixel(x, y)
+//            for (y in 0 until height)
+//                for (x in 0 until width)
+//                    finalizePixel(x, y)
         }
-        maskConfig.renderManager.canvas.repaint()
+//        maskConfig.renderManager.canvas.repaint()
     }
 
     private val random = java.util.Random()
     private fun spawnEntities() {
-        val chunkyScene = maskConfig.chunkyScene
+        val chunkyScene = maskConfigTab.chunkyScene
         for (i in 0..100) {
             val hue = Random.nextDouble()
 //            val sat = 1 - sin(Random.nextDouble(0.0, PI))

@@ -3,7 +3,7 @@ package de.groovybyte.chunky.maskplugin
 import de.groovybyte.chunky.maskplugin.utils.getSafeFieldGetterFor
 import se.llbit.chunky.block.Air
 import se.llbit.chunky.renderer.scene.Scene
-import se.llbit.math.BVH
+import se.llbit.math.bvh.BVH
 import se.llbit.math.Ray
 import se.llbit.math.Vector4
 
