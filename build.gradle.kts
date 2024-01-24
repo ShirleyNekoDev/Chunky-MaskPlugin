@@ -2,17 +2,17 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
-    kotlin("jvm") version "1.7.10"
-    id("org.openjfx.javafxplugin") version "0.0.13"
+    kotlin("jvm") version "1.9.20"
+    id("org.openjfx.javafxplugin") version "0.1.0"
 
-    id("com.github.ben-manes.versions") version "0.42.0"
+    id("com.github.ben-manes.versions") version "0.49.0"
     idea
 }
 
 group = "de.groovybyte.chunky"
 version = "1.0"
 // https://repo.lemaik.de/se/llbit/chunky-core/maven-metadata.xml
-val chunkyVersion = "2.5.0-20220304.113004-103"
+val chunkyVersion = "2.5.0-SNAPSHOT"
 
 repositories {
     mavenLocal()
@@ -22,15 +22,17 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("stdlib"))
 
     implementation("se.llbit:chunky-core:$chunkyVersion") {
-        isChanging = true
+        if (chunkyVersion.endsWith("SNAPSHOT")) {
+            isChanging = true
+        }
     }
 }
 
 javafx {
-    version = "18.0.2"
+    version = "17"
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 
@@ -52,8 +54,9 @@ tasks {
         kotlinOptions {
             javaParameters = true
             jvmTarget = "9"
-            apiVersion = "1.7"
-            languageVersion = "1.7"
+            apiVersion = "1.8"
+//            languageVersion = "1.8"
+//            freeCompilerArgs += "-Xuse-k2"
         }
     }
 
@@ -74,15 +77,9 @@ tasks {
     }
 
     withType<DependencyUpdatesTask> {
-        val regex = Regex("^[0-9,.v-]+(-r)?\$")
-        fun isNonStable(version: String): Boolean {
-            val stableKeyword = listOf("RELEASE", "FINAL", "GA")
-                .any { keyword -> version.toUpperCase().contains(keyword) }
-            return !stableKeyword && !regex.matches(version)
-        }
-
+        val unstable = Regex("^.*?(?:alpha|beta|unstable|rc|ea).*\$", RegexOption.IGNORE_CASE)
         rejectVersionIf {
-            isNonStable(candidate.version)
+            candidate.version.matches(unstable)
         }
     }
 }
