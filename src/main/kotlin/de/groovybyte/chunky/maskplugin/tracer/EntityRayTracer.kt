@@ -1,11 +1,10 @@
 package de.groovybyte.chunky.maskplugin.tracer
 
-import de.groovybyte.chunky.maskplugin.utils.getSafeFieldGetterFor
-import se.llbit.chunky.block.Air
+import de.groovybyte.chunky.maskplugin.utils.*
+import se.llbit.chunky.block.minecraft.Air
 import se.llbit.chunky.renderer.WorkerState
 import se.llbit.chunky.renderer.scene.RayTracer
 import se.llbit.chunky.renderer.scene.Scene
-import se.llbit.math.bvh.BVH
 import se.llbit.math.Ray
 import se.llbit.math.Vector4
 
@@ -29,11 +28,6 @@ object EntityRayTracer: RayTracer {
         }
     }
 
-    private val getBVH = Scene::class.java
-        .getSafeFieldGetterFor<Scene, BVH>("bvh")
-    private val getActorBVH = Scene::class.java
-        .getSafeFieldGetterFor<Scene, BVH>("actorBvh")
-
     fun trace(x: Int, y: Int, scene: Scene): Vector4 {
         val halfWidth = scene.width / (2.0 * scene.height)
         val invHeight = 1.0 / scene.height
@@ -54,11 +48,11 @@ object EntityRayTracer: RayTracer {
         ray.t = Double.POSITIVE_INFINITY
         var hit = false
 
-        if (scene.getBVH().closestIntersection(ray)) {
+        if (scene.getSceneEntities().getBVH().closestIntersection(ray)) {
 //            ray.color.set(Vector4(1.0, 0.0, 0.0, 1.0))
             hit = true
         }
-        if (scene.getActorBVH().closestIntersection(ray)) {
+        if (scene.getSceneEntities().getActorBVH().closestIntersection(ray)) {
 //            ray.color.set(Vector4(1.0, 0.0, 0.0, 1.0))
             hit = true
         }

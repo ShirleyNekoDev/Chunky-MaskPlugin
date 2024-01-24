@@ -1,6 +1,5 @@
 package de.groovybyte.chunky.maskplugin.ui
 
-import de.groovybyte.chunky.maskplugin.tracer.EntityRayTracer
 import de.groovybyte.chunky.maskplugin.MaskingEntity
 import de.groovybyte.chunky.maskplugin.utils.fx.action
 import de.groovybyte.chunky.maskplugin.utils.fx.add

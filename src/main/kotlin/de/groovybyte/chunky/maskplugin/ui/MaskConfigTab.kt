@@ -5,6 +5,7 @@ import de.groovybyte.chunky.maskplugin.utils.fx.add
 import de.groovybyte.chunky.maskplugin.utils.fx.paddingAll
 import de.groovybyte.chunky.maskplugin.MaskColorConfiguration
 import de.groovybyte.chunky.maskplugin.utils.ColorBinding
+import de.groovybyte.chunky.maskplugin.utils.NamedColorBinding
 import de.groovybyte.chunky.maskplugin.utils.getSafe
 import javafx.collections.FXCollections
 import javafx.collections.ObservableMap
@@ -28,36 +29,37 @@ class MaskConfigTab(
     private val colorConfig: MaskColorConfiguration,
 ) : RenderControlsTab {
 
-    val skyMask: ColorBinding
-    val sunMask: ColorBinding
-    val cloudMask: ColorBinding
-    val waterMask: ColorBinding
-    val bvhMask: ColorBinding
-    val actorMask: ColorBinding
-    val anyMaterialMask: ColorBinding
+    val skyMask: NamedColorBinding
+    val sunMask: NamedColorBinding
+    val cloudMask: NamedColorBinding
+    val waterMask: NamedColorBinding
+    val bvhMask: NamedColorBinding
+    val actorMask: NamedColorBinding
+    val anyMaterialMask: NamedColorBinding
 
     private val materialMaskingPanel: MaterialMaskingPanel
-    private val locationMaskingPanel: LocationMaskingPanel
+//    private val locationMaskingPanel: LocationMaskingPanel
 
-    val specificMaterialMasks: ObservableMap<String, ColorBinding> =
+    val specificMaterialMasks: ObservableMap<String, NamedColorBinding> =
         FXCollections.observableHashMap()
 
     init {
         with(colorConfig) {
-            skyMask = ColorBinding(skyMaskColor)
-            sunMask = ColorBinding(sunMaskColor)
-            cloudMask = ColorBinding(cloudMaskColor)
-            waterMask = ColorBinding(waterMaskColor)
-            bvhMask = ColorBinding(bvhMaskColor)
-            actorMask = ColorBinding(actorMaskColor)
-            anyMaterialMask = ColorBinding(anyMaterialMaskColor)
+            skyMask = NamedColorBinding("Sky", skyMaskColor)
+            sunMask = NamedColorBinding("Sun", sunMaskColor)
+            cloudMask = NamedColorBinding("Clouds", cloudMaskColor)
+            waterMask = NamedColorBinding("Water", waterMaskColor)
+            bvhMask = NamedColorBinding("Entities & Special Blocks", bvhMaskColor)
+            actorMask = NamedColorBinding("Actors", actorMaskColor)
+            anyMaterialMask = NamedColorBinding("Unknown", anyMaterialMaskColor)
         }
 
         materialMaskingPanel = MaterialMaskingPanel(this)
-        locationMaskingPanel = LocationMaskingPanel(this)
+//        locationMaskingPanel = LocationMaskingPanel(this)
 
         with(colorConfig) {
             registerBlockPaletteChangeListener { removedMaterials, addedMaterials ->
+                println("bpcl: rm=$removedMaterials am=$addedMaterials")
                 specificMaterialMasks.keys.removeAll(removedMaterials)
                 specificMaterialMasks.putAll(addedMaterials)
                 materialMaskingPanel.update()
@@ -66,6 +68,7 @@ class MaskConfigTab(
     }
 
     override fun update(scene: Scene) {
+        println("mct updated block palette $scene.palette.palette")
         colorConfig.updateBlockPalette(scene.palette)
     }
 
@@ -116,7 +119,7 @@ class MaskConfigTab(
         add(Text("Opacity is not supported!"))
 
         add(materialMaskingPanel)
-        add(locationMaskingPanel)
+//        add(locationMaskingPanel)
     }
 
     fun updateMask() {

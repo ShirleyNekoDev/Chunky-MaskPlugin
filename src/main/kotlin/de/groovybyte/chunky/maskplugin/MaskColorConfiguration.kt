@@ -1,8 +1,9 @@
 package de.groovybyte.chunky.maskplugin
 
 import de.groovybyte.chunky.maskplugin.utils.ColorBinding
+import de.groovybyte.chunky.maskplugin.utils.NamedColorBinding
 import de.groovybyte.chunky.maskplugin.utils.averageFlatColor
-import se.llbit.chunky.block.Air
+import se.llbit.chunky.block.minecraft.Air
 import se.llbit.chunky.chunk.BlockPalette
 import se.llbit.chunky.world.Material
 import se.llbit.math.Vector4
@@ -34,7 +35,7 @@ data class MaskColorConfiguration(
             .associateWith { materialName ->
                 val vec4 = blockPalette[materialName]!!.averageFlatColor
                 specificMaterialMaskColors[materialName] = vec4
-                ColorBinding(vec4)
+                NamedColorBinding(materialName, vec4)
             }
 
         blockPaletteChangeListeners.forEach {
@@ -52,7 +53,7 @@ data class MaskColorConfiguration(
     fun interface BlockPaletteChangeListener {
         fun onChange(
             removedMaterials: Set<String>,
-            addedMaterials: Map<String, ColorBinding>
+            addedMaterials: Map<String, NamedColorBinding>
         )
     }
 }

@@ -3,16 +3,15 @@ package de.groovybyte.chunky.maskplugin.tracer
 import de.groovybyte.chunky.maskplugin.FakeMaterial
 import de.groovybyte.chunky.maskplugin.MaskColorConfiguration
 import de.groovybyte.chunky.maskplugin.utils.CelestialUtils
-import de.groovybyte.chunky.maskplugin.utils.getSafeFieldGetterFor
-import se.llbit.chunky.block.Air
-import se.llbit.chunky.block.Water
-import se.llbit.chunky.model.WaterModel
+import de.groovybyte.chunky.maskplugin.utils.*
+import se.llbit.chunky.block.minecraft.Air
+import se.llbit.chunky.block.minecraft.Water
+import se.llbit.chunky.model.minecraft.WaterModel
 import se.llbit.chunky.renderer.WorkerState
 import se.llbit.chunky.renderer.scene.RayTracer
 import se.llbit.chunky.renderer.scene.Scene
 import se.llbit.math.Ray
 import se.llbit.math.Vector4
-import se.llbit.math.bvh.BVH
 
 /**
  * @author Maximilian Stiede
@@ -61,13 +60,6 @@ open class MaskRayTracer(
 
     companion object {
         private val SUN_MATERIAL = FakeMaterial("sun")
-
-        private val getBVH = Scene::class.java
-            .getSafeFieldGetterFor<Scene, BVH>("bvh")
-        private val shouldRenderActors = Scene::class.java
-            .getSafeFieldGetterFor<Scene, Boolean>("renderActors")
-        private val getActorBVH = Scene::class.java
-            .getSafeFieldGetterFor<Scene, BVH>("actorBvh")
     }
 
     /*
@@ -121,12 +113,12 @@ open class MaskRayTracer(
             }
         }
 
-        if (scene.getBVH().closestIntersection(ray)) {
+        if (scene.getSceneEntities().getBVH().closestIntersection(ray)) {
             ray.color.set(colorConfig.bvhMaskColor)
             hit = true
         }
-        if (scene.shouldRenderActors()) {
-            if (scene.getActorBVH().closestIntersection(ray)) {
+        if (scene.getSceneEntities().shouldRenderActors()) {
+            if (scene.getSceneEntities().getActorBVH().closestIntersection(ray)) {
                 ray.color.set(colorConfig.actorMaskColor)
                 hit = true
             }
@@ -217,20 +209,21 @@ open class MaskRayTracer(
     private val skyReflectionColor: Vector4 = Vector4(0.0, 0.0, 1.0, 1.0)
     private val blockReflectionColor: Vector4 = Vector4(1.0, 0.0, 0.0, 1.0)
 
-    protected fun traceWaterMask(scene: Scene, ray: Ray) {
-        // water mask hit
-
-        if (!scene.stillWaterEnabled() && ray.normal.y != 0.0) {
-            WaterModel.doWaterDisplacement(ray)
-        }
-
-        // do specular reflection
-        val reflected = Ray();
-        reflected.specularReflection(ray, null) // water does not have roughness (please)
-        if (!followRay(scene, reflected)) {
-            ray.color.set(skyReflectionColor)
-        } else {
-            ray.color.set(blockReflectionColor)
-        }
-    }
+//    protected fun traceWaterMask(scene: Scene, ray: Ray) {
+//        // water mask hit
+//
+//        // TODO: Scene::getCurrentWaterShader(), Scene::getWaterShader(wss), WaterShadingStrategy
+//        if (!scene.stillWaterEnabled() && ray.normal.y != 0.0) {
+//            WaterModel.doWaterDisplacement(ray)
+//        }
+//
+//        // do specular reflection
+//        val reflected = Ray();
+//        reflected.specularReflection(ray, null) // water does not have roughness (please)
+//        if (!followRay(scene, reflected)) {
+//            ray.color.set(skyReflectionColor)
+//        } else {
+//            ray.color.set(blockReflectionColor)
+//        }
+//    }
 }

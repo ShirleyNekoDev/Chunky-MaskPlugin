@@ -24,7 +24,7 @@ object CelestialUtils {
         val sunLocation = sun.location
         if(ray.d.dot(sunLocation) < .5) return false
 
-        val WIDTH = Sun.RADIUS * 4
+        val WIDTH = sun.radius * 4
         val WIDTH2 = WIDTH * 2
         var a: Double = Math.PI / 2 - acos(ray.d.dot(sun.getSU())) + WIDTH
         if (a >= 0 && a < WIDTH2) {
